@@ -28,7 +28,18 @@ print(f"Current page job listings: {len(listings)}")
 all_jobs = []
 processed_count = 0
 
-while True:
+while processed_count < total_results:
+    if processed_count > 0:
+        # Move to the next page of job listings
+        url = urljoin(url, f"{processed_count}")
+        print(f"Moving to next page: {url}")
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # listings on current page
+        listings = soup.find_all("tr", class_="data-row")
+        print(f"Current page job listings: {len(listings)}")
+
     # Scraping loop for 1 page of job listings
     for listing in listings:
         partial_joburl = listing.find("a", class_="jobTitle-link")["href"] if listing.find("a", class_="jobTitle-link") else None
@@ -46,7 +57,6 @@ while True:
 
         responsejob = requests.get(joburl)
         soupjob = BeautifulSoup(responsejob.content, "html.parser")
-        print(response.status_code)
 
         jobtext = soupjob.find_all("div", class_="joblayouttoken")
         texts = []
@@ -61,17 +71,8 @@ while True:
             "job_description": full_job_description}
         all_jobs.append(combined_listing_data)
         processed_count += 1
+        print(f"Processed {processed_count}/{total_results} job listings.")
     
-    if processed_count >= total_results:
-        break
-    
-    # Move to the next page of job listings
-    url = urljoin(url, f"{current_listings_count}")
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    # listings on current page
-    listings = soup.find_all("tr", class_="data-row")
 
 df = pd.DataFrame(all_jobs)
 df.to_csv(f"{company_name}_jobs.csv", index=False)
