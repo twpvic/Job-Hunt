@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+pandas
+numpy
+llama-cpp-python
+langgraph
+python-dotenv
