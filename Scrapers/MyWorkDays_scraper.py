@@ -1,31 +1,31 @@
 import json
 import time
 import requests
+import pandas as pd
+from urllib.parse import urlparse, urljoin
 from playwright.sync_api import sync_playwright
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment
-from openpyxl.utils import get_column_letter
 
-# Config
-TENANT = "ocbc"
-SITE = "External"
-BASE = f"https://{TENANT}.wd102.myworkdayjobs.com"
-API_URL = f"{BASE}/wday/cxs/{TENANT}/{SITE}/jobs"
-JOB_PAGE_BASE = f"{BASE}/en-US/{SITE}/job"
+url = input("Enter the URL of the Workday job listing page: ")
+
+# Parse the URL to extract the tenant, company name, and site
+parsed_url = urlparse(url)
+tenant = parsed_url.netloc.split('.')[0] 
+company_name = tenant
+print(f"Company name (Tenant): {company_name}")
+
+path_parts = parsed_url.path.strip('/').split('/')
+SITE = path_parts[1] if len(path_parts) >= 2 else "External"
+BASE = f"https://{parsed_url.netloc}"
+API_URL = f"{BASE}/wday/cxs/{tenant}/{SITE}/jobs"
+
 
 PAGE_SIZE = 20          # Workday's default page size for this endpoint
-REQUEST_DELAY = 0.5     # be polite between API calls
+REQUEST_DELAY = 0.5
 DETAIL_DELAY = 0.8      # delay between job-detail page loads
-OUTPUT_FILE = "ocbc_jobs.xlsx"
 
 
 # Phase 1: Get all job listings via the Workday JSON API
 def fetch_all_listings():
-    """
-    Paginate through the Workday CXS jobs API and collect basic info
-    for every job: title, location, posted date, and the path used to
-    build the detail-page link.
-    """
     session = requests.Session()
     session.headers.update({
         "Content-Type": "application/json",
@@ -135,51 +135,22 @@ def scrape_job_details(listings):
     return listings
 
 
-# Phase 3: Write to Excel
-def write_excel(listings, filename=OUTPUT_FILE):
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "OCBC Jobs"
 
-    headers = ["Title", "Location", "Posted Date", "Job Req ID", "Time Type", "Link", "Description"]
-    ws.append(headers)
-    for cell in ws[1]:
-        cell.font = Font(bold=True)
-
-    for job in listings:
-        ws.append([
-            job.get("title", ""),
-            job.get("location", ""),
-            job.get("posted_date", ""),
-            job.get("job_req_id", job.get("job_id", "")),
-            job.get("time_type", ""),
-            job.get("link", ""),
-            job.get("description", ""),
-        ])
-
-    widths = [40, 25, 15, 18, 12, 50, 80]
-    for i, w in enumerate(widths, 1):
-        ws.column_dimensions[get_column_letter(i)].width = w
-
-    for row in ws.iter_rows(min_row=2):
-        for cell in row:
-            cell.alignment = Alignment(wrap_text=True, vertical="top")
-
-    wb.save(filename)
-    print(f"Saved {len(listings)} jobs to {filename}")
-
-
-# --- Main ---------------------------------------------------------------
 if __name__ == "__main__":
     print("Phase 1: Fetching job listings from Workday API...")
-    listings = fetch_all_listings()
+    all_jobs = fetch_all_listings()
 
-    # Save a raw checkpoint in case Phase 2 fails partway through
+    # Save a raw checkpoint in case Phase 2 fails partway through[cite: 1]
     with open("listings_checkpoint.json", "w") as f:
-        json.dump(listings, f, indent=2)
+        json.dump(all_jobs, f, indent=2)
 
-    print(f"\nPhase 2: Scraping {len(listings)} job detail pages...")
-    listings = scrape_job_details(listings)
+    print(f"\nPhase 2: Scraping {len(all_jobs)} job detail pages...")
+    all_jobs = scrape_job_details(all_jobs)
 
-    print("\nPhase 3: Writing Excel file...")
-    write_excel(listings)
+    print("\nPhase 3: Saving data...")
+    # Export to CSV using pandas to match the SuccessFactors script style
+    df = pd.DataFrame(all_jobs)
+    output_filename = f"{company_name}_jobs.csv"
+    df.to_csv(output_filename, index=False)
+
+    print(f"Scraping completed. Total jobs scraped: {len(all_jobs)}. Data saved to '{output_filename}'.")
