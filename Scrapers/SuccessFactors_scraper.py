@@ -31,9 +31,9 @@ processed_count = 0
 while processed_count < total_results:
     if processed_count > 0:
         # Move to the next page of job listings
-        url = urljoin(url, f"{processed_count}")
-        print(f"Moving to next page: {url}")
-        response = requests.get(url)
+        current_page_url = urljoin(url, f"{processed_count}")
+        print(f"Moving to next page: {current_page_url}")
+        response = requests.get(current_page_url)
         soup = BeautifulSoup(response.content, "html.parser")
 
         # listings on current page

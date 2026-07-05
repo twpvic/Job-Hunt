@@ -148,7 +148,6 @@ if __name__ == "__main__":
     all_jobs = scrape_job_details(all_jobs)
 
     print("\nPhase 3: Saving data...")
-    # Export to CSV using pandas to match the SuccessFactors script style
     df = pd.DataFrame(all_jobs)
     output_filename = f"{company_name}_jobs.csv"
     df.to_csv(output_filename, index=False)
