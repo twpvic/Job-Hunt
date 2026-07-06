@@ -101,10 +101,10 @@ def scrape_job_details(listings):
                 continue
 
             try:
-                page.goto(job["link"], wait_until="domcontentloaded", timeout=30000)
+                page.goto(job["link"], wait_until="domcontentloaded", timeout=15000)
                 page.wait_for_selector(
                     '[data-automation-id="jobPostingDescription"]',
-                    timeout=15000
+                    timeout=10000
                 )
 
                 description = page.locator(
