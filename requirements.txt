@@ -5,3 +5,5 @@ numpy
 llama-cpp-python
 langgraph
 python-dotenv
+urllib
+playwright
