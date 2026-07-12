@@ -1,4 +1,5 @@
 import os
+import glob
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,9 +23,26 @@ if __name__ == "__main__":
         user_query = input("\nWhat kind of role are you looking for? (or 'quit'): ")
         if user_query.lower() in ['quit', 'exit']:
             break
+
+        use_resume_input = input("Do you want to use your resume for comparison? y/n: ").strip().lower()
+        use_resume = use_resume_input in ['yes', 'y']
+
+
+        resume_path = ""
+        if use_resume:
+            resume_path_input = input("Place resume in Data file and provide name:").strip()
+            resume_path = os.path.join("Data", resume_path_input)
+            print(f"Using resume at: {resume_path}")
+            if not os.path.isfile(resume_path):
+                print(f"Resume file '{resume_path}' not found. Please ensure the file exists in the 'Data/' folder. Continuing without resume")
+                use_resume = False
+                resume_path = ""
             
         initial_state = {
             "query": user_query,
+            "use_resume": use_resume,
+            "resume_path": resume_path,
+            "resume_text": "",
             "context": "",
             "answer": ""
         }

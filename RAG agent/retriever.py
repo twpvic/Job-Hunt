@@ -10,7 +10,8 @@ embedding_model = Llama(
     model_path=Embedding_model_path,
     embedding=True,
     verbose=False,
-    n_ctx=20480
+    n_ctx=20480,
+    n_gpu_layers=-1
 )
 
 

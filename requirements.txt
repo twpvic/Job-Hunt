@@ -5,3 +5,4 @@ numpy
 llama-cpp-python
 langgraph
 python-dotenv
+pypdf
